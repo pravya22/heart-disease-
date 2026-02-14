@@ -6,13 +6,13 @@ import joblib
 # Load model and scaler
 # ----------------------
 model = joblib.load("heart_model.pkl")
-scaler = joblib.load("scaler.pkl")
+heart_model.pkl = joblib.load("scaler.pkl")
 
 # safe handling if scaler has no feature names
 if hasattr(scaler, "feature_names_in_"):
-    scaled_features_names = list(scaler.feature_names_in_)
+    heart_model.pkl_names = list(heart_model_feature_names_in_)
 else:
-    scaled_features_names = ["age", "trestbps", "chol", "thalch", "oldpeak"]
+    heart_model.pkl_names = ["age", "trestbps", "chol", "thalch", "oldpeak"]
 
 # ----------------------
 # Page setup
@@ -133,11 +133,11 @@ full_input = {
 # ----------------------
 # Scale required features
 # ----------------------
-scaled_array = np.array([[full_input[f] for f in scaled_features_names]])
-scaled_values = scaler.transform(scaled_array)[0]
+heart_model_array = np.array([[full_input[f] for f in scaled_features_names]])
+heart_model_values = scaler.transform(scaled_array)[0]
 
-scaled_input = full_input.copy()
-for i, f in enumerate(scaled_features_names):
+heart_model_input = full_input.copy()
+for i, f in enumerate(heart_model_names):
     scaled_input[f] = scaled_values[i]
 
 # ----------------------
