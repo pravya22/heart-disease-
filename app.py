@@ -28,7 +28,7 @@ thal = st.selectbox("Thal (0-3)", [0, 1, 2, 3])
 # Convert categorical values
 sex = 1 if sex == "Male" else 0
 
-# Dummy ID (because model trained with id column)
+# Dummy ID (if your model was trained with id column)
 id_value = 0
 
 # Prediction
@@ -52,10 +52,8 @@ if st.button("Predict"):
     ]])
 
     prediction = model.predict(final_input)
-    probability = model.predict_proba(final_input)[0][1]
 
-    st.write(f"Prediction Value: {prediction[0]}")
-    st.write(f"Risk Probability: {probability*100:.2f}%")
+    st.write("Prediction Value:", prediction[0])
 
     if prediction[0] == 1:
         st.error("⚠️ High Risk of Heart Disease")
