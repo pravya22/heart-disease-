@@ -2,12 +2,15 @@ import streamlit as st
 import numpy as np
 import joblib
 
-# Load model
+# ----------------------
+# Load trained model and scaler
+# ----------------------
 model = joblib.load("heart_model.pkl")
+scaler = joblib.load("scaler.pkl")  # the scaler used during training
 
 st.set_page_config(page_title="Heart Disease Prediction", page_icon="❤️")
 st.title("❤️ Heart Disease Prediction App")
-st.write("Adjust the sliders to test Low Risk and High Risk scenarios:")
+st.write("Adjust sliders to test Low Risk and High Risk scenarios:")
 
 # ----------------------
 # User Inputs
@@ -39,22 +42,24 @@ input_data = np.array([[
 ]])
 
 # ----------------------
+# Scale input
+# ----------------------
+input_scaled = scaler.transform(input_data)
+
+# ----------------------
 # Predict
 # ----------------------
 if st.button("Predict"):
-    if input_data.shape[1] != model.n_features_in_:
-        st.error(f"⚠️ Feature count mismatch! "
-                 f"Model expects {model.n_features_in_}, input has {input_data.shape[1]}.")
+    prediction = model.predict(input_scaled)
+
+    if prediction[0] == 1:
+        st.error("⚠️ High Risk of Heart Disease")
     else:
-        prediction = model.predict(input_data)
+        st.success("✅ Low Risk of Heart Disease")
 
-        if prediction[0] == 1:
-            st.error("⚠️ High Risk of Heart Disease")
-        else:
-            st.success("✅ Low Risk of Heart Disease")
+    # Show probability if model supports it
+    if hasattr(model, "predict_proba"):
+        proba = model.predict_proba(input_scaled)[0][1]
+        st.progress(int(proba*100))
+        st.write(f"Risk Probability: {proba*100:.2f}%")
 
-        # Optional: show probability
-        if hasattr(model, "predict_proba"):
-            proba = model.predict_proba(input_data)[0][1]
-            st.progress(int(proba*100))
-            st.write(f"Risk Probability: {proba*100:.2f}%")
