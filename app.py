@@ -2,15 +2,16 @@ import streamlit as st
 import numpy as np
 import joblib
 
-# Load trained model and scaler
+# Load trained model
 model = joblib.load("heart_model.pkl")
-scaler = joblib.load("scaler.pkl")  # Only if your training data was scaled
 
 st.set_page_config(page_title="Heart Disease Prediction", page_icon="❤️")
 st.title("❤️ Heart Disease Prediction App")
 st.write("Enter patient details below:")
 
+# ----------------------
 # User Inputs
+# ----------------------
 age = st.number_input("Age", min_value=1, max_value=120)
 sex = st.selectbox("Sex", ["Male", "Female"])
 cp = st.selectbox("Chest Pain Type (0-3)", [0, 1, 2, 3])
@@ -25,10 +26,15 @@ slope = st.selectbox("Slope (0-2)", [0, 1, 2])
 ca = st.selectbox("Number of Major Vessels (0-3)", [0, 1, 2, 3])
 thal = st.selectbox("Thal (0-3)", [0, 1, 2, 3])
 
-# Encode categorical variables
+# ----------------------
+# Encode categorical
+# ----------------------
 sex = 1 if sex == "Male" else 0
 
-# Prepare input in the correct order used in training
+# ----------------------
+# Prepare input
+# ----------------------
+# Make sure the feature order is the same as used in training
 input_data = np.array([[ 
     age,
     sex,
@@ -45,19 +51,19 @@ input_data = np.array([[
     thal
 ]])
 
-# Scale input if scaler exists
-input_scaled = scaler.transform(input_data)
-
-# Predict button
+# ----------------------
+# Predict
+# ----------------------
 if st.button("Predict"):
-    prediction = model.predict(input_scaled)
+    prediction = model.predict(input_data)
 
     if prediction[0] == 1:
         st.error("⚠️ High Risk of Heart Disease")
     else:
         st.success("✅ Low Risk of Heart Disease")
 
-    # Optional: Show probability
+    # Optional: show probability if model supports it
     if hasattr(model, "predict_proba"):
-        proba = model.predict_proba(input_scaled)[0][1]  # Probability of class 1
+        proba = model.predict_proba(input_data)[0][1]  # probability of class 1
         st.write(f"Risk Probability: {proba*100:.2f}%")
+
