@@ -6,18 +6,19 @@ import joblib
 # Load model and scaler
 # ----------------------
 model = joblib.load("heart_model.pkl")
-scaler = joblib.load("scaler.pkl")  # the scaler used during training
+scaler = joblib.load("scaler.pkl")  # trained on 5 features only
+scaled_features_names = scaler.feature_names_in_  # list of 5 features scaled
 
 st.set_page_config(page_title="Heart Disease Prediction", page_icon="❤️")
 st.title("❤️ Heart Disease Prediction App")
-st.write("Adjust sliders to test Low Risk and High Risk scenarios:")
+st.write("Use the sliders to test Low Risk and High Risk scenarios.")
 
 # ----------------------
 # Preset values
 # ----------------------
 high_risk_values = {
     "age": 65,
-    "sex": 1,       # Male
+    "sex": 1,
     "cp": 3,
     "trestbps": 180,
     "chol": 300,
@@ -33,7 +34,7 @@ high_risk_values = {
 
 low_risk_values = {
     "age": 40,
-    "sex": 0,       # Female
+    "sex": 0,
     "cp": 0,
     "trestbps": 110,
     "chol": 180,
@@ -63,7 +64,7 @@ else:
 # User Inputs
 # ----------------------
 age = st.slider("Age", 1, 120, values.get("age", 60))
-sex_input = st.radio("Sex", ["Male", "Female"], index=0 if values.get("sex", 1)==1 else 1)
+sex_input = st.radio("Sex", ["Male", "Female"], index=0 if values.get("sex",1)==1 else 1)
 sex = 1 if sex_input=="Male" else 0
 cp = st.selectbox("Chest Pain Type (0-3)", [0,1,2,3], index=values.get("cp",0))
 trestbps = st.slider("Resting Blood Pressure", 50, 250, values.get("trestbps",120))
@@ -78,25 +79,31 @@ ca = st.selectbox("Number of Major Vessels (0-3)", [0,1,2,3], index=values.get("
 thal = st.selectbox("Thal (0-3)", [0,1,2,3], index=values.get("thal",1))
 
 # ----------------------
-# Prepare input for scaler
+# Prepare full input
 # ----------------------
-input_features = np.array([[age, sex, cp, trestbps, chol, fbs, restecg,
-                            thalch, exang, oldpeak, slope, ca, thal]])
+id_value = 0  # dummy id if model needs
+
+# Full dictionary of all inputs
+input_dict = {
+    "age": age, "sex": sex, "cp": cp, "trestbps": trestbps,
+    "chol": chol, "fbs": fbs, "restecg": restecg, "thalch": thalch,
+    "exang": exang, "oldpeak": oldpeak, "slope": slope, "ca": ca, "thal": thal
+}
 
 # ----------------------
-# Scale input
+# Extract features for scaler
 # ----------------------
-try:
-    input_scaled = scaler.transform(input_features)
-except ValueError as e:
-    st.error(f"Scaler feature mismatch! {e}")
-    st.stop()
+scaled_values = np.array([[input_dict[feat] for feat in scaled_features_names]])
+scaled_values = scaler.transform(scaled_values)  # scale only the 5 features
 
 # ----------------------
-# Add dummy id if model expects
+# Combine scaled and remaining features
 # ----------------------
-id_value = 0
-input_final = np.hstack([[id_value], input_scaled])
+remaining_features = [feat for feat in input_dict if feat not in scaled_features_names]
+remaining_values = np.array([[input_dict[feat] for feat in remaining_features]])
+
+# Combine: [id] + scaled features + remaining features
+input_final = np.hstack([[id_value], scaled_values, remaining_values])
 
 # ----------------------
 # Predict
