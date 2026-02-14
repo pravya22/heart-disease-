@@ -3,10 +3,10 @@ import numpy as np
 import joblib
 
 # ----------------------
-# Load trained model and scaler
+# Load model and scaler
 # ----------------------
 model = joblib.load("heart_model.pkl")
-scaler = joblib.load("scaler.pkl")  # the scaler used during training
+scaler = joblib.load("scaler.pkl")  # scaler fitted on training data WITHOUT id
 
 st.set_page_config(page_title="Heart Disease Prediction", page_icon="❤️")
 st.title("❤️ Heart Disease Prediction App")
@@ -33,33 +33,52 @@ thal = st.selectbox("Thal (0-3)", [0, 1, 2, 3], index=1)
 sex = 1 if sex == "Male" else 0
 
 # ----------------------
-# Prepare input (14 features)
+# Prepare input for scaler (exclude id)
 # ----------------------
-id_value = 0
-input_data = np.array([[
-    id_value, age, sex, cp, trestbps, chol, fbs, restecg,
+input_features = np.array([[
+    age, sex, cp, trestbps, chol, fbs, restecg,
     thalch, exang, oldpeak, slope, ca, thal
 ]])
 
 # ----------------------
 # Scale input
 # ----------------------
-input_scaled = scaler.transform(input_data)
+input_scaled = scaler.transform(input_features)
+
+# ----------------------
+# Add dummy id if model expects it
+# ----------------------
+id_value = 0
+input_final = np.hstack([[id_value], input_scaled])  # final array for model prediction
 
 # ----------------------
 # Predict
 # ----------------------
 if st.button("Predict"):
-    prediction = model.predict(input_scaled)
-
-    if prediction[0] == 1:
-        st.error("⚠️ High Risk of Heart Disease")
+    if input_final.shape[1] != model.n_features_in_:
+        st.error(f"⚠️ Feature count mismatch! "
+                 f"Model expects {model.n_features_in_}, input has {input_final.shape[1]}.")
     else:
-        st.success("✅ Low Risk of Heart Disease")
+        prediction = model.predict(input_final)
 
-    # Show probability if model supports it
-    if hasattr(model, "predict_proba"):
-        proba = model.predict_proba(input_scaled)[0][1]
-        st.progress(int(proba*100))
-        st.write(f"Risk Probability: {proba*100:.2f}%")
+        if prediction[0] == 1:
+            st.error("⚠️ High Risk of Heart Disease")
+        else:
+            st.success("✅ Low Risk of Heart Disease")
+
+        # Probability bar if available
+        if hasattr(model, "predict_proba"):
+            proba = model.predict_proba(input_final)[0][1]
+            st.progress(int(proba*100))
+            st.write(f"Risk Probability: {proba*100:.2f}%")
+
+# ----------------------
+# Optional: preset buttons for High Risk / Low Risk
+# ----------------------
+if st.button("Set High Risk Defaults"):
+    st.experimental_rerun()  # optional: you can prefill sliders with high-risk values manually
+
+if st.button("Set Low Risk Defaults"):
+    st.experimental_rerun()  # optional: prefill sliders with low-risk values manually
+
 
